@@ -6,6 +6,8 @@ public:
 	bool gameOver;
 	int foodCount;
 	int moveCount;
+	int score;
+	int timePenalty;
 
 	stats();
 };

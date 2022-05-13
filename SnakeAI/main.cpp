@@ -81,7 +81,12 @@ void make_move(grid& theGrid, snake& theSnake, directions direction, stats& theS
 		theGrid.new_food();
 		theGrid.place_food();
 		theStats.foodCount++;
-		theStats.moveCount++;
+		theStats.moveCount = theStats.moveCount + 200;
+		if (theStats.moveCount > 300) {
+			theStats.moveCount = 300;
+		}
+		theStats.score = theStats.score - theStats.timePenalty + 1000;
+		theStats.timePenalty = 0;
 	}
 	else {
 		// Clear the board to remove the snake from last iteration
@@ -91,7 +96,9 @@ void make_move(grid& theGrid, snake& theSnake, directions direction, stats& theS
 		theSnake.remove_tail();
 		theGrid.place_snake(theSnake);
 		theGrid.place_food();
-		theStats.moveCount++;
+		theStats.moveCount--;	// Decrease moveCount after every move
+		theStats.score++;		// Score increases each move to incentivize staying alive longer
+		theStats.timePenalty = theStats.timePenalty + 2;
 	}
 	return;
 }
@@ -135,7 +142,7 @@ void draw_scorecard(SDL_Renderer* renderer, TTF_Font* font, stats& theStats) {
 	SDL_DestroyTexture(texture);
 	SDL_FreeSurface(surface);
 
-	surface = TTF_RenderText_Solid(font, "Moves:", { 0, 0, 0, 255 });
+	surface = TTF_RenderText_Solid(font, "Moves Left:", { 0, 0, 0, 255 });
 	texture = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
 	dstrect = { 5, 200, texW, texH };
@@ -148,7 +155,25 @@ void draw_scorecard(SDL_Renderer* renderer, TTF_Font* font, stats& theStats) {
 	surface = TTF_RenderText_Solid(font, moveCount, { 0, 0, 0, 255 });
 	texture = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
-	dstrect = { 80, 200, texW, texH };
+	dstrect = { 120, 200, texW, texH };
+	SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+
+	surface = TTF_RenderText_Solid(font, "Score:", { 0, 0, 0, 255 });
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+	dstrect = { 5, 300, texW, texH };
+	SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+
+	tmp = std::to_string(theStats.score);
+	char const* score = tmp.c_str();
+	surface = TTF_RenderText_Solid(font, moveCount, { 0, 0, 0, 255 });
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+	dstrect = { 80, 300, texW, texH };
 	SDL_RenderCopy(renderer, texture, NULL, &dstrect);
 	SDL_DestroyTexture(texture);
 	SDL_FreeSurface(surface);

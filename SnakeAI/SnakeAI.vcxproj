@@ -154,10 +154,12 @@
     <ClCompile Include="grid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="snake.cpp" />
+    <ClCompile Include="neuralnet.cpp" />
     <ClCompile Include="stats.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="grid.h" />
+    <ClInclude Include="neuralnet.h" />
     <ClInclude Include="snake.h" />
     <ClInclude Include="stats.h" />
   </ItemGroup>
