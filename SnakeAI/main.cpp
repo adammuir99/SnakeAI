@@ -4,6 +4,9 @@
 #include "snake.h"
 #include "stats.h"
 #include <string>
+#include "neuralnet.h"
+#include "population.h"
+#include "const.h"
 using namespace std;
 
 bool check_valid(grid& theGrid, snake& theSnake, directions direction) {
@@ -53,7 +56,7 @@ bool check_valid(grid& theGrid, snake& theSnake, directions direction) {
 	return true;
 }
 
-void make_move(grid& theGrid, snake& theSnake, directions direction, stats& theStats) {
+void make_move(grid& theGrid, snake& theSnake, directions direction) {
 	pair<int, int> head = theSnake.getHead();
 	pair<int, int> next_move;
 	switch (direction) {
@@ -80,13 +83,13 @@ void make_move(grid& theGrid, snake& theSnake, directions direction, stats& theS
 		theGrid.place_snake(theSnake);
 		theGrid.new_food();
 		theGrid.place_food();
-		theStats.foodCount++;
-		theStats.moveCount = theStats.moveCount + 200;
-		if (theStats.moveCount > 300) {
-			theStats.moveCount = 300;
+		theSnake.myStats.foodCount++;
+		theSnake.myStats.moveCount = theSnake.myStats.moveCount + 200;
+		if (theSnake.myStats.moveCount > 300) {
+			theSnake.myStats.moveCount = 300;
 		}
-		theStats.score = theStats.score - theStats.timePenalty + 1000;
-		theStats.timePenalty = 0;
+		theSnake.myStats.score = theSnake.myStats.score - theSnake.myStats.timePenalty + 1000;
+		theSnake.myStats.timePenalty = 0;
 	}
 	else {
 		// Clear the board to remove the snake from last iteration
@@ -96,9 +99,9 @@ void make_move(grid& theGrid, snake& theSnake, directions direction, stats& theS
 		theSnake.remove_tail();
 		theGrid.place_snake(theSnake);
 		theGrid.place_food();
-		theStats.moveCount--;	// Decrease moveCount after every move
-		theStats.score++;		// Score increases each move to incentivize staying alive longer
-		theStats.timePenalty = theStats.timePenalty + 2;
+		theSnake.myStats.moveCount--;	// Decrease moveCount after every move
+		theSnake.myStats.score++;		// Score increases each move to incentivize staying alive longer
+		theSnake.myStats.timePenalty = theSnake.myStats.timePenalty + 2;
 	}
 	return;
 }
@@ -227,11 +230,18 @@ int main(int argc, char *argv[]) {
 	// Create snake, grid, and stats objects
 	grid theGrid;
 	theGrid.new_food();
-	snake theSnake;
+
+	vector<unsigned> topology;
+	topology.push_back(24);	// Input Layer
+	topology.push_back(16);	// Hidden Layer(s)
+	topology.push_back(16);
+	topology.push_back(4);	// Output Layer
+	snake theSnake(topology);
 	stats theStats;
 	
 	srand(2);
 
+	population pop(2000, 0.01, topology);
 	// Randomize the starting direction
 	directions newDirection = directions(rand()%4);
 
@@ -277,11 +287,11 @@ int main(int argc, char *argv[]) {
 		// (2) Handle Updates
 		if (gameActive) {
 			if (check_valid(theGrid, theSnake, newDirection)) {
-				make_move(theGrid, theSnake, newDirection, theStats);
+				make_move(theGrid, theSnake, newDirection);
 			}
 			else {
 				gameActive = false;
-				theStats.gameOver = true;
+				theSnake.myStats.gameOver = true;
 			}
 		}
 		theSnake.oldDirection = newDirection;	// Update the old direction
@@ -290,8 +300,8 @@ int main(int argc, char *argv[]) {
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);	// Black
 		SDL_RenderClear(renderer);
 
-		draw_game(renderer, theGrid, theStats);
-		draw_scorecard(renderer, font, theStats);
+		draw_game(renderer, theGrid, theSnake.myStats);
+		draw_scorecard(renderer, font, theSnake.myStats);
 
 		SDL_RenderPresent(renderer);
 		SDL_Delay(75);

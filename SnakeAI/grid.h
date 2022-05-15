@@ -2,17 +2,9 @@
 #define GRID_H
 #include <utility>
 #include "snake.h"
+#include "const.h"
 
 using namespace std;
-
-constexpr int GRID_WIDTH = 40;
-constexpr int GRID_HEIGHT = 40;
-
-enum gridContents{
-	EMPTY,
-	SNAKE,
-	FOOD
-};
 
 class grid{
 public:
