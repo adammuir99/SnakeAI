@@ -218,6 +218,92 @@ void draw_game(SDL_Renderer* renderer, grid theGrid, stats& theStats) {
 	}
 }
 
+// Will play the game using the given snake's brain
+void visualize_snake(grid &theGrid, net &snake_brain, SDL_Renderer* renderer, TTF_Font* font) {
+	bool isRunning = true;	// Flag controls graphics
+	bool gameActive = true;	// Flag controls game
+	directions newDirection = directions(rand() % 4);
+
+	vector<unsigned> topology;
+	topology.push_back(24);	// Input Layer
+	topology.push_back(16);	// Hidden Layer(s)
+	topology.push_back(16);
+	topology.push_back(4);	// Output Layer
+	snake theSnake(topology);
+
+	theSnake.neuralnet = snake_brain;
+
+	while (isRunning) {
+		SDL_Event event;
+
+		// (1) Handle Input
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_QUIT) {
+				isRunning = false;
+			}
+		}
+
+		// (2) Handle Updates
+		theSnake.get_vision(theGrid.a);
+		vector<double> inputVals = theSnake.vision;
+		theSnake.neuralnet.feed_forward(inputVals);
+
+		vector<double> resultVals;
+		theSnake.neuralnet.get_results(resultVals);
+
+		double highest_output = 0.0;
+		for (unsigned n = 0; n < 4; n++) {
+			if (resultVals[n] > highest_output) {
+				switch (n) {
+				case 0: if (theSnake.oldDirection != directions::DOWN) {
+					newDirection = directions::UP;
+					highest_output = resultVals[n];
+				}
+					  break;
+				case 1: if (theSnake.oldDirection != directions::UP) {
+					newDirection = directions::DOWN;
+					highest_output = resultVals[n];
+				}
+					  break;
+				case 2: if (theSnake.oldDirection != directions::RIGHT) {
+					newDirection = directions::LEFT;
+					highest_output = resultVals[n];
+				}
+					  break;
+				case 3: if (theSnake.oldDirection != directions::LEFT) {
+					newDirection = directions::RIGHT;
+					highest_output = resultVals[n];
+				}
+					  break;
+
+				}
+
+			}
+		}
+
+		if (gameActive) {
+			if (check_valid(theGrid, theSnake, newDirection)) {
+				make_move(theGrid, theSnake, newDirection);
+			}
+			else {
+				gameActive = false;
+				theSnake.myStats.gameOver = true;
+			}
+		}
+		theSnake.oldDirection = newDirection;	// Update the old direction
+
+		// (3) Clear and Draw the Screen
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);	// Black
+		SDL_RenderClear(renderer);
+
+		draw_game(renderer, theGrid, theSnake.myStats);
+		draw_scorecard(renderer, font, theSnake.myStats);
+
+		SDL_RenderPresent(renderer);
+		SDL_Delay(75);
+	}
+}
+
 int main(int argc, char *argv[]) {
 
 	// Create the SDL window and renderer
@@ -296,6 +382,7 @@ int main(int argc, char *argv[]) {
 			else {
 				gameActive = false;
 				pop.snakePop[i].myStats.gameOver = true;
+				cout << "Score: " << pop.snakePop[i].myStats.score << endl;
 			}
 			pop.snakePop[i].oldDirection = newDirection;	// Update the old direction
 			if (pop.snakePop[i].myStats.moveCount == 0) {
@@ -306,7 +393,9 @@ int main(int argc, char *argv[]) {
 		gameActive = true;
 	}
 
-	snake fittest_snake = pop.get_fittest_snake();
+	net fittest_snake_brain = pop.get_fittest_snake().neuralnet;
+
+	visualize_snake(theGrid, fittest_snake_brain, renderer, font);
 
 	TTF_CloseFont(font);
 	TTF_Quit();
