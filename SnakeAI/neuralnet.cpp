@@ -43,6 +43,24 @@ void neuron::updateInputWeights(layer& prevLayer) {
 	}
 }
 
+// Returns a vector of all the weights from the previous layer to this neuron
+vector<double> neuron::getInputWeights(layer& prevLayer) {
+	vector<double> inputWeights;
+	for (unsigned n = 0; n < prevLayer.size(); n++) {
+		neuron& neuron = prevLayer[n];
+		inputWeights.push_back(neuron.m_outputWeights[m_myIndex]);
+	}
+	return inputWeights;
+}
+
+void neuron::setInputWeights(layer& prevLayer, vector<double> inputWeights) {
+	for (unsigned n = 0; n < prevLayer.size(); n++) {
+		neuron& neuron = prevLayer[n];
+		neuron.m_outputWeights[m_myIndex] = inputWeights[n];
+	}
+	return;
+}
+
 double neuron::sumDOW(const layer& nextLayer) const {
 	double sum = 0.0;
 
@@ -181,6 +199,32 @@ void net::get_results(vector<double> &resultVals) const {
 	for (unsigned n = 0; n < m_layers.back().size() - 1; n++) {
 		resultVals.push_back(m_layers.back()[n].getOutputVal());
 	}
+}
+
+vector<vector<double>> net::get_layer_weights(unsigned layerNum) const {
+	assert(layerNum < m_layers.size());
+	assert(layerNum > 0);	// If layerNum is 0, prevLayer will be -1 and out of bounds
+	layer currLayer = m_layers[layerNum];
+	layer prevLayer = m_layers[layerNum - 1];
+	vector<vector<double>> layerWeights;
+	for (unsigned i = 0; i < currLayer.size(); i++) {
+		vector<double> neuron_weights = currLayer[i].getInputWeights(prevLayer);
+		layerWeights.push_back(neuron_weights);
+	}
+	return layerWeights;
+}
+
+void net::set_layer_weights(unsigned layerNum, vector<vector<double>> layerWeights) {
+	assert(layerNum < m_layers.size());
+	assert(layerNum > 0);	// If layerNum is 0, prevLayer will be -1 and out of bounds
+	assert(m_layers[layerNum].size() == layerWeights.size());
+
+	layer currLayer = m_layers[layerNum];
+	layer prevLayer = m_layers[layerNum - 1];
+	for (unsigned i = 0; i < currLayer.size(); i++) {
+		currLayer[i].setInputWeights(prevLayer, layerWeights[i]);
+	}
+	return;
 }
 
 void neural_net() {

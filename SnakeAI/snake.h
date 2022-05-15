@@ -24,6 +24,7 @@ public:
 	void add_head(pair<int, int> new_joint);
 	void remove_tail();
 	void get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]);
+
 };
 
 #endif // SNAKE_H

@@ -16,6 +16,8 @@ public:
 	void calcOutputGradients(double targetVal);
 	void calcHiddenGradients(const layer &nextLayer);
 	void updateInputWeights(layer& prevLayer);
+	vector<double> getInputWeights(layer& prevLayer);
+	void setInputWeights(layer& prevLayer, vector<double> inputWeights);
 
 private:
 	double m_outputVal;
@@ -37,6 +39,8 @@ public:
 	void feed_forward(const vector<double>& inputVals);
 	void back_prop(const vector<double>& targetVals);
 	void get_results(vector<double>& resultVals) const;
+	vector<vector<double>> get_layer_weights(unsigned layerNum) const;
+	void set_layer_weights(unsigned layerNum, vector<vector<double>> layerWeights);
 
 private:
 	vector<layer> m_layers; // layers[layerNum][neuronNum]

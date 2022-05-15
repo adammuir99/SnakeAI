@@ -301,6 +301,10 @@ void visualize_snake(grid &theGrid, net &snake_brain, SDL_Renderer* renderer, TT
 
 		SDL_RenderPresent(renderer);
 		SDL_Delay(75);
+		if (!gameActive) {
+			SDL_Delay(3000);	// Pause the screen after game ends
+			return;
+		}
 	}
 }
 
@@ -323,8 +327,6 @@ int main(int argc, char *argv[]) {
 	topology.push_back(16);	// Hidden Layer(s)
 	topology.push_back(16);
 	topology.push_back(4);	// Output Layer
-	snake theSnake(topology);
-	stats theStats;
 	
 	srand(2);
 
@@ -382,7 +384,6 @@ int main(int argc, char *argv[]) {
 			else {
 				gameActive = false;
 				pop.snakePop[i].myStats.gameOver = true;
-				cout << "Score: " << pop.snakePop[i].myStats.score << endl;
 			}
 			pop.snakePop[i].oldDirection = newDirection;	// Update the old direction
 			if (pop.snakePop[i].myStats.moveCount == 0) {
