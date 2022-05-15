@@ -13,7 +13,7 @@ public:
 	int snakeLength;
 	directions oldDirection;
 	net neuralnet;
-	vector<double> vision;	// Groupings of 3 doubles: North{sees food, sees self, distance}
+	vector<double> vision;	// Groupings of 3 doubles: Direction{sees food, sees self, distance}
 							// eg. North{1.0, 0.0, 1/5} means the first thing seen in the north
 							// direction is food and it is 5 squares away (normalized 1/5)
 	stats myStats;

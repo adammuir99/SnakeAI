@@ -44,8 +44,10 @@ void snake::get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]) {
 	}
 	temp_vision[2] = 1 / distance;
 	distance = 1.0;
+	x = head.second;
+	y = head.first;
 	// NE
-	while (y > 0 || x < GRID_WIDTH - 1) {
+	while (y > 0 && x < GRID_WIDTH - 1) {
 		y--;
 		x++;
 		if (a[y][x] == FOOD) {
@@ -60,6 +62,8 @@ void snake::get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]) {
 	}
 	temp_vision[5] = 1 / distance;
 	distance = 1.0;
+	x = head.second;
+	y = head.first;
 	// E
 	while (x < GRID_WIDTH - 1) {
 		x++;
@@ -75,8 +79,10 @@ void snake::get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]) {
 	}
 	temp_vision[8] = 1 / distance;
 	distance = 1.0;
+	x = head.second;
+	y = head.first;
 	// SE
-	while (y < GRID_HEIGHT - 1 || x < GRID_WIDTH - 1) {
+	while (y < GRID_HEIGHT - 1 && x < GRID_WIDTH - 1) {
 		y++;
 		x++;
 		if (a[y][x] == FOOD) {
@@ -91,6 +97,8 @@ void snake::get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]) {
 	}
 	temp_vision[11] = 1 / distance;
 	distance = 1.0;
+	x = head.second;
+	y = head.first;
 	// S
 	while (y < GRID_HEIGHT - 1) {
 		y++;
@@ -106,8 +114,10 @@ void snake::get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]) {
 	}
 	temp_vision[14] = 1 / distance;
 	distance = 1.0;
+	x = head.second;
+	y = head.first;
 	// SW
-	while (y < GRID_HEIGHT - 1 || x > 0) {
+	while (y < GRID_HEIGHT - 1 && x > 0) {
 		y++;
 		x--;
 		if (a[y][x] == FOOD) {
@@ -122,6 +132,8 @@ void snake::get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]) {
 	}
 	temp_vision[17] = 1 / distance;
 	distance = 1.0;
+	x = head.second;
+	y = head.first;
 	// W
 	while (x > 0) {
 		x--;
@@ -137,8 +149,10 @@ void snake::get_vision(gridContents a[GRID_HEIGHT][GRID_WIDTH]) {
 	}
 	temp_vision[20] = 1 / distance;
 	distance = 1.0;
+	x = head.second;
+	y = head.first;
 	// NW
-	while (y > 0 || x > 0) {
+	while (y > 0 && x > 0) {
 		y--;
 		x--;
 		if (a[y][x] == FOOD) {

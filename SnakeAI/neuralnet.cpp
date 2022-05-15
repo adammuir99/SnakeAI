@@ -11,8 +11,7 @@ double neuron::alpha = 0.5; // momentum, multiplier of last deltaWeight, [0.0 ..
 
 neuron::neuron(unsigned numOutputs, unsigned myIndex) {
 	for (unsigned c = 0; c < numOutputs; c++) {
-		m_outputWeights.push_back(connection());
-		m_outputWeights.back().weight = randomWeight();
+		m_outputWeights.push_back(randomWeight());
 	}
 
 	m_myIndex = myIndex;
@@ -31,7 +30,6 @@ void neuron::updateInputWeights(layer& prevLayer) {
 	// in the neurons in the preceding layer
 	for (unsigned n = 0; n < prevLayer.size(); n++) {
 		neuron& neuron = prevLayer[n];
-		double oldDeltaWeight = neuron.m_outputWeights[m_myIndex].deltaWeight;
 
 		double newDeltaWeight =
 			// Individual input, magnified by the gradient and train rate:
@@ -39,11 +37,9 @@ void neuron::updateInputWeights(layer& prevLayer) {
 			* neuron.getOutputVal()
 			* m_gradient
 			// Also add momentum = a fraction of the previous delta weight
-			* alpha
-			* oldDeltaWeight;
+			* alpha;
 
-		neuron.m_outputWeights[m_myIndex].deltaWeight = newDeltaWeight;
-		neuron.m_outputWeights[m_myIndex].weight += newDeltaWeight;
+		neuron.m_outputWeights[m_myIndex] = newDeltaWeight;
 	}
 }
 
@@ -52,7 +48,7 @@ double neuron::sumDOW(const layer& nextLayer) const {
 
 	// Sum our contributions of the errors at the nodes we feed
 	for (unsigned n = 0; n < nextLayer.size() - 1; n++) {
-		sum += m_outputWeights[n].weight * nextLayer[n].m_gradient;
+		sum += m_outputWeights[n] * nextLayer[n].m_gradient;
 	}
 
 	return sum;
@@ -75,7 +71,7 @@ void neuron::feedForward(const layer& prevLayer) {
 	// Include the bias node from the previous layer
 
 	for (unsigned n = 0; n < prevLayer.size(); n++) {
-		sum += prevLayer[n].getOutputVal() * prevLayer[n].m_outputWeights[m_myIndex].weight;
+		sum += prevLayer[n].getOutputVal() * prevLayer[n].m_outputWeights[m_myIndex];
 	}
 
 	m_outputVal = neuron::transferFunction(sum);
@@ -92,7 +88,7 @@ double neuron::transferFunctionDerivative(double x) {
 }
 
 double neuron::randomWeight() {
-	return rand() / double(RAND_MAX);
+	return ((rand() / double(RAND_MAX)) * 2 - 1);
 }
 
 // ------------------------------ NET -------------------------------------

@@ -7,6 +7,7 @@
 #include "neuralnet.h"
 #include "population.h"
 #include "const.h"
+#include <iostream>
 using namespace std;
 
 bool check_valid(grid& theGrid, snake& theSnake, directions direction) {
@@ -241,71 +242,71 @@ int main(int argc, char *argv[]) {
 	
 	srand(2);
 
-	population pop(2000, 0.01, topology);
+	unsigned popSize = 2000;
+	population pop(popSize, 0.01, topology);
 	// Randomize the starting direction
 	directions newDirection = directions(rand()%4);
 
 	bool isRunning = true;	// Flag controls graphics
 	bool gameActive = true;	// Flag controls game
 	// Main Application Loop
-	while (isRunning) {
-		SDL_Event event;
-		
-		// (1) Handle Input
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
-				isRunning = false;
-			}
-			if (event.type == SDL_KEYDOWN) {
-				switch (event.key.keysym.sym) {
-					case SDLK_LEFT:
-						if (theSnake.oldDirection != directions::RIGHT) {	// prevent the snake from backing into itself
-							newDirection = directions::LEFT;
-						}
-						break;
-					case SDLK_RIGHT:
-						if (theSnake.oldDirection != directions::LEFT) {
-							newDirection = directions::RIGHT;
-						}
-						break;
-					case SDLK_UP:
-						if (theSnake.oldDirection != directions::DOWN) {
-							newDirection = directions::UP;
-						}
-						break;
-					case SDLK_DOWN:
-						if (theSnake.oldDirection != directions::UP) {
-							newDirection = directions::DOWN;
-						}
-						break;
-					default:
-						break;
+	for (unsigned i = 0; i < popSize; i++) {	// Loop through each snake and play the 
+		cout << "snake index: " << i << endl;
+		while (gameActive) {	// Main game loop
+			pop.snakePop[i].get_vision(theGrid.a);
+			vector<double> inputVals = pop.snakePop[i].vision;
+			pop.snakePop[i].neuralnet.feed_forward(inputVals);
+
+			vector<double> resultVals;
+			pop.snakePop[i].neuralnet.get_results(resultVals);
+
+			double highest_output = 0.0;
+			for (unsigned n = 0; n < 4; n++) {
+				if (resultVals[n] > highest_output) {
+					switch (n) {
+					case 0: if (pop.snakePop[i].oldDirection != directions::DOWN) {
+						newDirection = directions::UP;
+						highest_output = resultVals[n];
+					}
+						  break;
+					case 1: if (pop.snakePop[i].oldDirection != directions::UP) {
+						newDirection = directions::DOWN;
+						highest_output = resultVals[n];
+					}
+						  break;
+					case 2: if (pop.snakePop[i].oldDirection != directions::RIGHT) {
+						newDirection = directions::LEFT;
+						highest_output = resultVals[n];
+					}
+						  break;
+					case 3: if (pop.snakePop[i].oldDirection != directions::LEFT) {
+						newDirection = directions::RIGHT;
+						highest_output = resultVals[n];
+					}
+						  break;
+
+					}
+
 				}
 			}
-		}
 
-		// (2) Handle Updates
-		if (gameActive) {
-			if (check_valid(theGrid, theSnake, newDirection)) {
-				make_move(theGrid, theSnake, newDirection);
+			if (check_valid(theGrid, pop.snakePop[i], newDirection)) {
+				make_move(theGrid, pop.snakePop[i], newDirection);
 			}
 			else {
 				gameActive = false;
-				theSnake.myStats.gameOver = true;
+				pop.snakePop[i].myStats.gameOver = true;
+			}
+			pop.snakePop[i].oldDirection = newDirection;	// Update the old direction
+			if (pop.snakePop[i].myStats.moveCount == 0) {
+				gameActive = false;
+				pop.snakePop[i].myStats.gameOver = true;
 			}
 		}
-		theSnake.oldDirection = newDirection;	// Update the old direction
-
-		// (3) Clear and Draw the Screen
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);	// Black
-		SDL_RenderClear(renderer);
-
-		draw_game(renderer, theGrid, theSnake.myStats);
-		draw_scorecard(renderer, font, theSnake.myStats);
-
-		SDL_RenderPresent(renderer);
-		SDL_Delay(75);
+		gameActive = true;
 	}
+
+	snake fittest_snake = pop.get_fittest_snake();
 
 	TTF_CloseFont(font);
 	TTF_Quit();

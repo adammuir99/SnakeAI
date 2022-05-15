@@ -3,11 +3,6 @@
 #include <vector>
 using namespace std;
 
-struct connection {
-	double weight;
-	double deltaWeight;
-};
-
 class neuron;
 
 typedef vector<neuron> layer;
@@ -24,7 +19,7 @@ public:
 
 private:
 	double m_outputVal;
-	vector<connection> m_outputWeights;
+	vector<double> m_outputWeights;
 	unsigned m_myIndex;
 	double m_gradient;
 	static double eta;	// [0.0 .. 1.0] overall net training rate
