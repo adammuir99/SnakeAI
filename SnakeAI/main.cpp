@@ -259,6 +259,11 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 	while (isRunning) {
 		SDL_Event event;
 
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_QUIT) {
+				isRunning = false;
+			}
+		}
 		theSnake.get_vision(theGrid.a);
 		vector<double> inputVals = theSnake.vision;
 		theSnake.neuralnet.feed_forward(inputVals);
