@@ -243,6 +243,8 @@ void net::mutate(double mutation_rate) {
 		for (unsigned i = 0; i < currLayer.size() - 1; i++) {
 			currLayer[i].mutate_weights(prevLayer, mutation_rate);
 		}
+		m_layers[layerNum] = currLayer;
+		m_layers[layerNum - 1] = prevLayer;
 	}
 }
 

@@ -321,7 +321,7 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 		draw_scorecard(renderer, font, theSnake.myStats, generation);
 
 		SDL_RenderPresent(renderer);
-		SDL_Delay(75);
+		SDL_Delay(30);
 		if (!gameActive) {
 			SDL_Delay(1000);	// Pause the screen after game ends
 			return;
@@ -332,7 +332,7 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 int main(int argc, char *argv[]) {
 	// Change these variables
 	unsigned popSize = 2000;
-	double mutation_rate = 0.01;
+	double mutation_rate = 0.1;
 
 	// Create the SDL window and renderer
 	SDL_Init(SDL_INIT_EVERYTHING);
