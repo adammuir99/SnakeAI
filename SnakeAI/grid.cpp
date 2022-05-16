@@ -3,6 +3,7 @@
 using namespace std;
 
 grid::grid() {
+	foodIndex = 0;
 	this->reset();
 }
 
@@ -30,7 +31,7 @@ void grid::new_food(){
 			}
 		}
 	}
-
+	/*
 	int randomX = rand() % GRID_WIDTH;
 	int randomY = rand() % GRID_HEIGHT;
 	// If the random location is already occupied by the snake or is in the same spot as the old food, find a new location
@@ -40,7 +41,9 @@ void grid::new_food(){
 	}
 
 	this->a[randomY][randomX] = FOOD;
-	this->foodCoords = make_pair(randomY, randomX);
+	*/
+	foodIndex++;
+	this->foodCoords = this->testFood[foodIndex];
 	return;
 }
 

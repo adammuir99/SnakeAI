@@ -107,7 +107,7 @@ void make_move(grid& theGrid, snake& theSnake, directions direction) {
 	return;
 }
 
-void draw_scorecard(SDL_Renderer* renderer, TTF_Font* font, stats& theStats) {
+void draw_scorecard(SDL_Renderer* renderer, TTF_Font* font, stats const &theStats, unsigned generation) {
 	SDL_SetRenderDrawColor(renderer, 210, 210, 255, 255);	// Grey
 
 	// Create Rectangle
@@ -181,10 +181,28 @@ void draw_scorecard(SDL_Renderer* renderer, TTF_Font* font, stats& theStats) {
 	SDL_RenderCopy(renderer, texture, NULL, &dstrect);
 	SDL_DestroyTexture(texture);
 	SDL_FreeSurface(surface);
+
+	surface = TTF_RenderText_Solid(font, "Generation:", { 0, 0, 0, 255 });
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+	dstrect = { 5, 400, texW, texH };
+	SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+
+	tmp = std::to_string(generation);
+	char const* generation_char = tmp.c_str();
+	surface = TTF_RenderText_Solid(font, generation_char, { 0, 0, 0, 255 });
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+	dstrect = { 120, 400, texW, texH };
+	SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
 	return;
 }
 
-void draw_game(SDL_Renderer* renderer, grid theGrid, stats& theStats) {
+void draw_game(SDL_Renderer* renderer,grid const theGrid, stats const &theStats) {
 	// 601x601 pixel area for the 40x40 grid
 	// 40 tiles 14x14 with 1 pixel space bordering each (40x14+41=601)
 
@@ -219,10 +237,10 @@ void draw_game(SDL_Renderer* renderer, grid theGrid, stats& theStats) {
 }
 
 // Will play the game using the given snake's brain
-void visualize_snake(grid &theGrid, net &snake_brain, SDL_Renderer* renderer, TTF_Font* font) {
+void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Renderer* renderer, TTF_Font* font, unsigned generation) {
 	bool isRunning = true;	// Flag controls graphics
 	bool gameActive = true;	// Flag controls game
-	directions newDirection = directions(rand() % 4);
+	directions newDirection = directions::DOWN;
 
 	vector<unsigned> topology;
 	topology.push_back(24);	// Input Layer
@@ -233,17 +251,14 @@ void visualize_snake(grid &theGrid, net &snake_brain, SDL_Renderer* renderer, TT
 
 	theSnake.neuralnet = snake_brain;
 
+	grid theGrid;
+	theGrid.testFood = testFood;
+	theGrid.foodIndex = 0;
+	theGrid.foodCoords = theGrid.testFood[theGrid.foodIndex];
+
 	while (isRunning) {
 		SDL_Event event;
 
-		// (1) Handle Input
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
-				isRunning = false;
-			}
-		}
-
-		// (2) Handle Updates
 		theSnake.get_vision(theGrid.a);
 		vector<double> inputVals = theSnake.vision;
 		theSnake.neuralnet.feed_forward(inputVals);
@@ -281,23 +296,29 @@ void visualize_snake(grid &theGrid, net &snake_brain, SDL_Renderer* renderer, TT
 			}
 		}
 
-		if (gameActive) {
-			if (check_valid(theGrid, theSnake, newDirection)) {
-				make_move(theGrid, theSnake, newDirection);
-			}
-			else {
-				gameActive = false;
-				theSnake.myStats.gameOver = true;
-			}
+		if (check_valid(theGrid, theSnake, newDirection)) {
+			make_move(theGrid, theSnake, newDirection);
+		}
+		else {
+			gameActive = false;
+			theSnake.myStats.gameOver = true;
+			theGrid.foodIndex = 0;
+			theGrid.foodCoords = theGrid.testFood[theGrid.foodIndex];
 		}
 		theSnake.oldDirection = newDirection;	// Update the old direction
+		if (theSnake.myStats.moveCount == 0) {
+			gameActive = false;
+			theSnake.myStats.gameOver = true;
+			theGrid.foodIndex = 0;
+			theGrid.foodCoords = theGrid.testFood[theGrid.foodIndex];
+		}
 
 		// (3) Clear and Draw the Screen
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);	// Black
 		SDL_RenderClear(renderer);
 
 		draw_game(renderer, theGrid, theSnake.myStats);
-		draw_scorecard(renderer, font, theSnake.myStats);
+		draw_scorecard(renderer, font, theSnake.myStats, generation);
 
 		SDL_RenderPresent(renderer);
 		SDL_Delay(75);
@@ -309,6 +330,9 @@ void visualize_snake(grid &theGrid, net &snake_brain, SDL_Renderer* renderer, TT
 }
 
 int main(int argc, char *argv[]) {
+	// Change these variables
+	unsigned popSize = 2000;
+	double mutation_rate = 0.01;
 
 	// Create the SDL window and renderer
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -319,8 +343,8 @@ int main(int argc, char *argv[]) {
 	TTF_Font* font = TTF_OpenFont("arial.ttf", 22);
 
 	// Create snake, grid, and stats objects
-	grid theGrid;
-	theGrid.new_food();
+	//grid theGrid;
+	//theGrid.new_food();
 
 	vector<unsigned> topology;
 	topology.push_back(24);	// Input Layer
@@ -328,26 +352,37 @@ int main(int argc, char *argv[]) {
 	topology.push_back(16);
 	topology.push_back(4);	// Output Layer
 	
-	srand(2);
+	srand(1);
 
-	unsigned popSize = 2000;
-	population pop(popSize, 0.01, topology);
+	vector<pair<int, int>> testFood;
+
+	for (unsigned i = 0; i < 100; i++) {
+		int x = rand() % 40;
+		int y = rand() % 40;
+		testFood.push_back(make_pair(y, x));
+	}
+	
+	
+	population pop(popSize, mutation_rate, topology);
 	vector<pair<snake, snake>> fittest_snakes;
 
 	for (unsigned generation = 1; generation <= 10; generation++) {
 		if (generation > 1) {
-			population pop2(popSize, 0.01, topology, fittest_snakes[generation - 2]);
+			population pop2(popSize, mutation_rate, topology, fittest_snakes[generation - 2]);
 			pop = pop2;
 		}
 
 		// Randomize the starting direction
-		directions newDirection = directions(rand() % 4);
+		directions newDirection = directions::DOWN;
 
 		bool isRunning = true;	// Flag controls graphics
 		bool gameActive = true;	// Flag controls game
 		// Main Application Loop
-		for (unsigned i = 0; i < popSize; i++) {	// Loop through each snake and play the 
-			cout << "snake index: " << i << endl;
+		for (unsigned i = 0; i < popSize; i++) {	// Loop through each snake and play the game
+			grid theGrid;
+			theGrid.testFood = testFood;
+			theGrid.foodIndex = 0;
+			theGrid.foodCoords = theGrid.testFood[theGrid.foodIndex];
 			while (gameActive) {	// Main game loop
 				pop.snakePop[i].get_vision(theGrid.a);
 				vector<double> inputVals = pop.snakePop[i].vision;
@@ -392,22 +427,30 @@ int main(int argc, char *argv[]) {
 				else {
 					gameActive = false;
 					pop.snakePop[i].myStats.gameOver = true;
+					theGrid.foodIndex = 0;
+					theGrid.foodCoords = theGrid.testFood[theGrid.foodIndex];
 				}
 				pop.snakePop[i].oldDirection = newDirection;	// Update the old direction
 				if (pop.snakePop[i].myStats.moveCount == 0) {
 					gameActive = false;
 					pop.snakePop[i].myStats.gameOver = true;
+					theGrid.foodIndex = 0;
+					theGrid.foodCoords = theGrid.testFood[theGrid.foodIndex];
 				}
 			}
 			gameActive = true;
 		}
 
 		fittest_snakes.push_back(pop.get_fittest_snakes());
-
-		net fittest_snake_brain = fittest_snakes[generation - 1].first.neuralnet;
-
-		visualize_snake(theGrid, fittest_snake_brain, renderer, font);
+		cout << "Generation " << generation << ": done loading." << endl;
+		cout << "Fittest snake had score: " << fittest_snakes[generation - 1].first.myStats.score << endl;
 	}
+
+	for (unsigned generation = 1; generation <= 10; generation++) {
+		net fittest_snake_brain = fittest_snakes[generation - 1].first.neuralnet;
+		visualize_snake(testFood, fittest_snake_brain, renderer, font, generation);
+	}
+	
 
 	TTF_CloseFont(font);
 	TTF_Quit();

@@ -10,6 +10,8 @@ class grid{
 public:
 	gridContents a[GRID_HEIGHT][GRID_WIDTH];
 	pair<int, int> foodCoords;
+	vector<pair<int, int>> testFood;
+	int foodIndex;
 	
 	// Member Functions
 	grid();	// Constructor

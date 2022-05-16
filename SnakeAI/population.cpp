@@ -1,4 +1,6 @@
 #include "population.h"
+#include <fstream>
+#include <iterator>
 
 
 population::population(unsigned size, double mutation_rate, const vector<unsigned>& topology) {
@@ -29,6 +31,7 @@ void population::populate() {
 snake population::crossover(snake mom, snake dad, const vector<unsigned>& topology) {
 	net mom_brain = mom.neuralnet;
 	net dad_brain = dad.neuralnet;
+
 	net child_brain(topology);
 
 	// layer#<neuron#<input connection#<weight>>>
@@ -39,6 +42,13 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 		mom_weights.push_back(mom_brain.get_layer_weights(layer));
 		dad_weights.push_back(dad_brain.get_layer_weights(layer));
 	}
+
+	/*ofstream output_file("momlayer0.txt");
+	ostream_iterator<double> output_iterator(output_file, "\t");
+	for (int i = 0; i < mom_weights[0].size(); i++) {
+		copy(mom_weights[0].at(i).begin(), mom_weights[0].at(i).end(), output_iterator);
+		output_file << endl;
+	}*/
 
 	// Now we have 3D vectors of mom and dad's weights
 	// Take half of mom's weights and half of dad's weights,
@@ -60,8 +70,16 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 	for (unsigned layer = 1; layer < topology.size(); layer++) {
 		child_brain.set_layer_weights(layer, child_weights[layer - 1]);
 	}
+
 	snake child(topology);
 	child.neuralnet = child_brain;
+
+	/*ofstream output_file2("childlayer0.txt");
+	ostream_iterator<double> output_iterator2(output_file2, "\t");
+	for (int i = 0; i < mom_weights[0].size(); i++) {
+		copy(child_weights[0].at(i).begin(), child_weights[0].at(i).end(), output_iterator2);
+		output_file2 << endl;
+	}*/
 	
 	return child;
 }
