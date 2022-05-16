@@ -302,7 +302,7 @@ void visualize_snake(grid &theGrid, net &snake_brain, SDL_Renderer* renderer, TT
 		SDL_RenderPresent(renderer);
 		SDL_Delay(75);
 		if (!gameActive) {
-			SDL_Delay(3000);	// Pause the screen after game ends
+			SDL_Delay(1000);	// Pause the screen after game ends
 			return;
 		}
 	}
@@ -332,71 +332,82 @@ int main(int argc, char *argv[]) {
 
 	unsigned popSize = 2000;
 	population pop(popSize, 0.01, topology);
-	// Randomize the starting direction
-	directions newDirection = directions(rand()%4);
+	vector<pair<snake, snake>> fittest_snakes;
 
-	bool isRunning = true;	// Flag controls graphics
-	bool gameActive = true;	// Flag controls game
-	// Main Application Loop
-	for (unsigned i = 0; i < popSize; i++) {	// Loop through each snake and play the 
-		cout << "snake index: " << i << endl;
-		while (gameActive) {	// Main game loop
-			pop.snakePop[i].get_vision(theGrid.a);
-			vector<double> inputVals = pop.snakePop[i].vision;
-			pop.snakePop[i].neuralnet.feed_forward(inputVals);
+	for (unsigned generation = 1; generation <= 10; generation++) {
+		if (generation > 1) {
+			population pop2(popSize, 0.01, topology, fittest_snakes[generation - 2]);
+			pop = pop2;
+		}
 
-			vector<double> resultVals;
-			pop.snakePop[i].neuralnet.get_results(resultVals);
+		// Randomize the starting direction
+		directions newDirection = directions(rand() % 4);
 
-			double highest_output = 0.0;
-			for (unsigned n = 0; n < 4; n++) {
-				if (resultVals[n] > highest_output) {
-					switch (n) {
-					case 0: if (pop.snakePop[i].oldDirection != directions::DOWN) {
-						newDirection = directions::UP;
-						highest_output = resultVals[n];
-					}
-						  break;
-					case 1: if (pop.snakePop[i].oldDirection != directions::UP) {
-						newDirection = directions::DOWN;
-						highest_output = resultVals[n];
-					}
-						  break;
-					case 2: if (pop.snakePop[i].oldDirection != directions::RIGHT) {
-						newDirection = directions::LEFT;
-						highest_output = resultVals[n];
-					}
-						  break;
-					case 3: if (pop.snakePop[i].oldDirection != directions::LEFT) {
-						newDirection = directions::RIGHT;
-						highest_output = resultVals[n];
-					}
-						  break;
+		bool isRunning = true;	// Flag controls graphics
+		bool gameActive = true;	// Flag controls game
+		// Main Application Loop
+		for (unsigned i = 0; i < popSize; i++) {	// Loop through each snake and play the 
+			cout << "snake index: " << i << endl;
+			while (gameActive) {	// Main game loop
+				pop.snakePop[i].get_vision(theGrid.a);
+				vector<double> inputVals = pop.snakePop[i].vision;
+				pop.snakePop[i].neuralnet.feed_forward(inputVals);
+
+				vector<double> resultVals;
+				pop.snakePop[i].neuralnet.get_results(resultVals);
+
+				double highest_output = 0.0;
+				for (unsigned n = 0; n < 4; n++) {
+					if (resultVals[n] > highest_output) {
+						switch (n) {
+						case 0: if (pop.snakePop[i].oldDirection != directions::DOWN) {
+							newDirection = directions::UP;
+							highest_output = resultVals[n];
+						}
+							  break;
+						case 1: if (pop.snakePop[i].oldDirection != directions::UP) {
+							newDirection = directions::DOWN;
+							highest_output = resultVals[n];
+						}
+							  break;
+						case 2: if (pop.snakePop[i].oldDirection != directions::RIGHT) {
+							newDirection = directions::LEFT;
+							highest_output = resultVals[n];
+						}
+							  break;
+						case 3: if (pop.snakePop[i].oldDirection != directions::LEFT) {
+							newDirection = directions::RIGHT;
+							highest_output = resultVals[n];
+						}
+							  break;
+
+						}
 
 					}
+				}
 
+				if (check_valid(theGrid, pop.snakePop[i], newDirection)) {
+					make_move(theGrid, pop.snakePop[i], newDirection);
+				}
+				else {
+					gameActive = false;
+					pop.snakePop[i].myStats.gameOver = true;
+				}
+				pop.snakePop[i].oldDirection = newDirection;	// Update the old direction
+				if (pop.snakePop[i].myStats.moveCount == 0) {
+					gameActive = false;
+					pop.snakePop[i].myStats.gameOver = true;
 				}
 			}
-
-			if (check_valid(theGrid, pop.snakePop[i], newDirection)) {
-				make_move(theGrid, pop.snakePop[i], newDirection);
-			}
-			else {
-				gameActive = false;
-				pop.snakePop[i].myStats.gameOver = true;
-			}
-			pop.snakePop[i].oldDirection = newDirection;	// Update the old direction
-			if (pop.snakePop[i].myStats.moveCount == 0) {
-				gameActive = false;
-				pop.snakePop[i].myStats.gameOver = true;
-			}
+			gameActive = true;
 		}
-		gameActive = true;
+
+		fittest_snakes.push_back(pop.get_fittest_snakes());
+
+		net fittest_snake_brain = fittest_snakes[generation - 1].first.neuralnet;
+
+		visualize_snake(theGrid, fittest_snake_brain, renderer, font);
 	}
-
-	net fittest_snake_brain = pop.get_fittest_snake().neuralnet;
-
-	visualize_snake(theGrid, fittest_snake_brain, renderer, font);
 
 	TTF_CloseFont(font);
 	TTF_Quit();

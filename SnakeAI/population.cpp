@@ -15,7 +15,10 @@ population::population(unsigned size, double mutation_rate, const vector<unsigne
 	this->mutation_rate = mutation_rate;
 
 	snake child = crossover(parents.first, parents.second, topology);
-
+	for (unsigned i = 0; i < size; i++) {
+		snakePop.push_back(child);
+	}
+	mutate();
 }
 
 void population::populate() {
@@ -40,16 +43,13 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 	// Now we have 3D vectors of mom and dad's weights
 	// Take half of mom's weights and half of dad's weights,
 	// and assign to child
-	vector<vector<vector<double>>> child_weights;
+	vector<vector<vector<double>>> child_weights = dad_weights;
 
-	for (unsigned layer = 1; layer < topology.size(); layer++) {
-		for (unsigned neuron = 0; neuron < topology[layer]; neuron++) {
-			for (unsigned connection = 0; connection < topology[layer - 1]; connection++) {
-				if (connection < topology[layer - 1] / 2) {	// first half of weights are taken from mom
+	for (unsigned layer = 0; layer < mom_weights.size(); layer++) {
+		for (unsigned neuron = 0; neuron < mom_weights[layer].size(); neuron++) {
+			for (unsigned connection = 0; connection < mom_weights[layer][neuron].size(); connection++) {
+				if (connection < mom_weights[layer][neuron].size() / 2) {	// first half of weights are taken from mom
 					child_weights[layer][neuron][connection] = mom_weights[layer][neuron][connection];
-				}
-				else {	// Second half of weights are from dad
-					child_weights[layer][neuron][connection] = dad_weights[layer][neuron][connection];
 				}
 			}
 		}
@@ -58,7 +58,7 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 	// The child's weights are set, now place them in the
 	// child's brain
 	for (unsigned layer = 1; layer < topology.size(); layer++) {
-		child_brain.set_layer_weights(layer, child_weights[layer]);
+		child_brain.set_layer_weights(layer, child_weights[layer - 1]);
 	}
 	snake child(topology);
 	child.neuralnet = child_brain;
@@ -66,14 +66,22 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 	return child;
 }
 
-snake population::get_fittest_snake() {
+void population::mutate() {
+	for (unsigned i = 1; i < snakePop.size(); i++) {
+		snakePop[i].neuralnet.mutate(mutation_rate);
+	}
+}
+
+pair<snake, snake> population::get_fittest_snakes() {
 	int fitnessScore = 0;
 	unsigned fittestSnakeIndex = 0;
+	unsigned secondFittestSnakeIndex = 0;
 	for (unsigned i = 0; i < size; i++) {
 		if (snakePop[i].myStats.score > fitnessScore) {
+			secondFittestSnakeIndex = fittestSnakeIndex;
 			fittestSnakeIndex = i;
 			fitnessScore = snakePop[i].myStats.score;
 		}
 	}
-	return snakePop[fittestSnakeIndex];
+	return make_pair(snakePop[fittestSnakeIndex], snakePop[secondFittestSnakeIndex]);
 }

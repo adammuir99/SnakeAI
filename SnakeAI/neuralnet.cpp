@@ -109,6 +109,15 @@ double neuron::randomWeight() {
 	return ((rand() / double(RAND_MAX)) * 2 - 1);
 }
 
+void neuron::mutate_weights(layer& prevLayer, double mutation_rate) {
+	for (unsigned n = 0; n < prevLayer.size(); n++) {
+		if (rand() / double(RAND_MAX) < mutation_rate) {
+			neuron& neuron = prevLayer[n];
+			neuron.m_outputWeights[m_myIndex] = randomWeight();
+		}
+	}
+}
+
 // ------------------------------ NET -------------------------------------
 
 net::net(const vector<unsigned> &topology) {
@@ -207,7 +216,7 @@ vector<vector<double>> net::get_layer_weights(unsigned layerNum) const {
 	layer currLayer = m_layers[layerNum];
 	layer prevLayer = m_layers[layerNum - 1];
 	vector<vector<double>> layerWeights;
-	for (unsigned i = 0; i < currLayer.size(); i++) {
+	for (unsigned i = 0; i < currLayer.size() - 1; i++) {
 		vector<double> neuron_weights = currLayer[i].getInputWeights(prevLayer);
 		layerWeights.push_back(neuron_weights);
 	}
@@ -217,14 +226,24 @@ vector<vector<double>> net::get_layer_weights(unsigned layerNum) const {
 void net::set_layer_weights(unsigned layerNum, vector<vector<double>> layerWeights) {
 	assert(layerNum < m_layers.size());
 	assert(layerNum > 0);	// If layerNum is 0, prevLayer will be -1 and out of bounds
-	assert(m_layers[layerNum].size() == layerWeights.size());
+	assert(layerWeights.size() == m_layers[layerNum].size() - 1);
 
 	layer currLayer = m_layers[layerNum];
 	layer prevLayer = m_layers[layerNum - 1];
-	for (unsigned i = 0; i < currLayer.size(); i++) {
+	for (unsigned i = 0; i < currLayer.size() - 1; i++) {
 		currLayer[i].setInputWeights(prevLayer, layerWeights[i]);
 	}
 	return;
+}
+
+void net::mutate(double mutation_rate) {
+	for (unsigned layerNum = 1; layerNum < m_layers.size(); layerNum++) {
+		layer currLayer = m_layers[layerNum];
+		layer prevLayer = m_layers[layerNum - 1];
+		for (unsigned i = 0; i < currLayer.size() - 1; i++) {
+			currLayer[i].mutate_weights(prevLayer, mutation_rate);
+		}
+	}
 }
 
 void neural_net() {

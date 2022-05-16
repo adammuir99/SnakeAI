@@ -18,6 +18,7 @@ public:
 	void updateInputWeights(layer& prevLayer);
 	vector<double> getInputWeights(layer& prevLayer);
 	void setInputWeights(layer& prevLayer, vector<double> inputWeights);
+	void mutate_weights(layer& prevLayer, double mutation_rate);
 
 private:
 	double m_outputVal;
@@ -41,6 +42,7 @@ public:
 	void get_results(vector<double>& resultVals) const;
 	vector<vector<double>> get_layer_weights(unsigned layerNum) const;
 	void set_layer_weights(unsigned layerNum, vector<vector<double>> layerWeights);
+	void mutate(double mutation_rate);
 
 private:
 	vector<layer> m_layers; // layers[layerNum][neuronNum]

@@ -13,7 +13,8 @@ public:
 	population(unsigned size, double mutation_rate, const vector<unsigned>& topology, pair<snake, snake>& parents);		// Constructor for population evolved from parents
 	void populate();
 	snake crossover(snake mom, snake dad, const vector<unsigned>& topology);
-	snake get_fittest_snake();
+	pair<snake, snake> get_fittest_snakes();
+	void mutate();
 private:
 };
 
