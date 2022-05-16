@@ -332,7 +332,8 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 int main(int argc, char *argv[]) {
 	// Change these variables
 	unsigned popSize = 2000;
-	double mutation_rate = 0.1;
+	double mutation_rate = 0.05;
+	int max_generations = 30;
 
 	// Create the SDL window and renderer
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -366,7 +367,7 @@ int main(int argc, char *argv[]) {
 	population pop(popSize, mutation_rate, topology);
 	vector<pair<snake, snake>> fittest_snakes;
 
-	for (unsigned generation = 1; generation <= 10; generation++) {
+	for (unsigned generation = 1; generation <= max_generations; generation++) {
 		if (generation > 1) {
 			population pop2(popSize, mutation_rate, topology, fittest_snakes[generation - 2]);
 			pop = pop2;
@@ -445,8 +446,9 @@ int main(int argc, char *argv[]) {
 		cout << "Generation " << generation << ": done loading." << endl;
 		cout << "Fittest snake had score: " << fittest_snakes[generation - 1].first.myStats.score << endl;
 	}
-
-	for (unsigned generation = 1; generation <= 10; generation++) {
+	cout << "Generation complete, visualize the data?" << endl;
+	system("pause");
+	for (unsigned generation = 1; generation <= max_generations; generation++) {
 		net fittest_snake_brain = fittest_snakes[generation - 1].first.neuralnet;
 		visualize_snake(testFood, fittest_snake_brain, renderer, font, generation);
 	}
