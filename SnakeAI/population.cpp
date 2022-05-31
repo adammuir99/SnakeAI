@@ -35,8 +35,6 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 	net child_brain(topology);
 
 	snake child(topology);
-	child.neuralnet = mom_brain;
-	return child;
 
 	// layer#<neuron#<input connection#<weight>>>
 	vector<vector<vector<double>>> mom_weights, dad_weights;

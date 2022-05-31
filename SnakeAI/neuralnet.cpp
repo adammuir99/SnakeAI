@@ -233,6 +233,8 @@ void net::set_layer_weights(unsigned layerNum, vector<vector<double>> layerWeigh
 	for (unsigned i = 0; i < currLayer.size() - 1; i++) {
 		currLayer[i].setInputWeights(prevLayer, layerWeights[i]);
 	}
+	m_layers[layerNum] = currLayer;
+	m_layers[layerNum - 1] = prevLayer;
 	return;
 }
 

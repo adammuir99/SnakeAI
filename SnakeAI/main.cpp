@@ -101,7 +101,7 @@ void make_move(grid& theGrid, snake& theSnake, directions direction) {
 		theGrid.place_snake(theSnake);
 		theGrid.place_food();
 		theSnake.myStats.moveCount--;	// Decrease moveCount after every move
-		theSnake.myStats.score++;		// Score increases each move to incentivize staying alive longer
+		//theSnake.myStats.score++;		// Score increases each move to incentivize staying alive longer
 		theSnake.myStats.timePenalty = theSnake.myStats.timePenalty + 2;
 	}
 	return;
@@ -243,7 +243,7 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 	directions newDirection = directions::DOWN;
 
 	vector<unsigned> topology;
-	topology.push_back(24);	// Input Layer
+	topology.push_back(28);	// Input Layer
 	topology.push_back(16);	// Hidden Layer(s)
 	topology.push_back(16);
 	topology.push_back(4);	// Output Layer
@@ -266,6 +266,28 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 		}
 		theSnake.get_vision(theGrid.a);
 		vector<double> inputVals = theSnake.vision;
+		// Direction to go for food (23 = UP, 24 = DOWN, 25 = LEFT, 26 = RIGHT)
+		unsigned x = theSnake.getHead().second;
+		unsigned y = theSnake.getHead().first;
+		for (unsigned k = 0; k < 4; k++) inputVals.push_back(0);
+
+		if (theGrid.foodCoords.second < x) {	// Food is to the left of snake
+			inputVals[25] = 1;	// LEFT
+			inputVals[26] = 0;	// RIGHT
+		}
+		else if (theGrid.foodCoords.second > x) {	// Food is to the right of snake
+			inputVals[25] = 0;	// LEFT
+			inputVals[26] = 1;	// RIGHT
+		}
+		if (theGrid.foodCoords.first < y) {	// Food is above snake
+			inputVals[23] = 1;
+			inputVals[24] = 0;
+		}
+		else if (theGrid.foodCoords.first > y) {
+			inputVals[23] = 0;
+			inputVals[24] = 1;
+		}
+
 		theSnake.neuralnet.feed_forward(inputVals);
 
 		vector<double> resultVals;
@@ -336,7 +358,7 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 
 int main(int argc, char *argv[]) {
 	// Change these variables
-	unsigned popSize = 2000;
+	unsigned popSize = 20000;
 	double mutation_rate = 0.05;
 	int max_generations = 30;
 
@@ -353,7 +375,7 @@ int main(int argc, char *argv[]) {
 	//theGrid.new_food();
 
 	vector<unsigned> topology;
-	topology.push_back(24);	// Input Layer
+	topology.push_back(28);	// Input Layer
 	topology.push_back(16);	// Hidden Layer(s)
 	topology.push_back(16);
 	topology.push_back(4);	// Output Layer
@@ -392,6 +414,28 @@ int main(int argc, char *argv[]) {
 			while (gameActive) {	// Main game loop
 				pop.snakePop[i].get_vision(theGrid.a);
 				vector<double> inputVals = pop.snakePop[i].vision;
+				// Direction to go for food (23 = UP, 24 = DOWN, 25 = LEFT, 26 = RIGHT)
+				unsigned x = pop.snakePop[i].getHead().second;
+				unsigned y = pop.snakePop[i].getHead().first;
+				for (unsigned k = 0; k < 4; k++) inputVals.push_back(0);
+
+				if (theGrid.foodCoords.second < x) {	// Food is to the left of snake
+					inputVals[25] = 1;	// LEFT
+					inputVals[26] = 0;	// RIGHT
+				}
+				else if (theGrid.foodCoords.second > x) {	// Food is to the right of snake
+					inputVals[25] = 0;	// LEFT
+					inputVals[26] = 1;	// RIGHT
+				}
+				if (theGrid.foodCoords.first < y) {	// Food is above snake
+					inputVals[23] = 1;
+					inputVals[24] = 0;
+				}
+				else if (theGrid.foodCoords.first > y) {
+					inputVals[23] = 0;
+					inputVals[24] = 1;
+				}
+
 				pop.snakePop[i].neuralnet.feed_forward(inputVals);
 
 				vector<double> resultVals;
@@ -453,6 +497,11 @@ int main(int argc, char *argv[]) {
 	}
 	cout << "Generation complete, visualize the data?" << endl;
 	system("pause");
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);	// Black
+	SDL_RenderClear(renderer);
+	SDL_RenderPresent(renderer);
+	SDL_Delay(5000);
 	for (unsigned generation = 1; generation <= max_generations; generation++) {
 		net fittest_snake_brain = fittest_snakes[generation - 1].first.neuralnet;
 		visualize_snake(testFood, fittest_snake_brain, renderer, font, generation);
