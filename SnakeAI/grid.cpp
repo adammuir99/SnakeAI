@@ -43,6 +43,16 @@ void grid::new_food(){
 	this->a[randomY][randomX] = FOOD;
 	*/
 	foodIndex++;
+	if (foodIndex > 999) {
+		foodIndex = 0;
+	}
+	// Prevent food from appearing on snake square
+	while (this->a[this->testFood[foodIndex].first][this->testFood[foodIndex].second] == SNAKE) {
+		foodIndex++;
+		if (foodIndex > 999) {
+			foodIndex = 0;
+		}
+	}
 	this->foodCoords = this->testFood[foodIndex];
 	return;
 }

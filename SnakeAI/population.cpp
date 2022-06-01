@@ -1,6 +1,7 @@
 #include "population.h"
 #include <fstream>
 #include <iterator>
+#include <algorithm>
 
 
 population::population(unsigned size, double mutation_rate, const vector<unsigned>& topology) {
@@ -12,13 +13,16 @@ population::population(unsigned size, double mutation_rate, const vector<unsigne
 	}
 }
 
-population::population(unsigned size, double mutation_rate, const vector<unsigned>& topology, pair<snake, snake>& parents) {
+population::population(unsigned size, double mutation_rate, const vector<unsigned>& topology, snake& child) {
 	this->size = size;
 	this->mutation_rate = mutation_rate;
 
-	snake child = crossover(parents.first, parents.second, topology);
+	snake clone(topology);
+	clone.neuralnet = child.neuralnet;
+
+	//snakePop.push_back(parents.first);	// First snake is the same as the best snake from the last generation without crossover
 	for (unsigned i = 0; i < size; i++) {
-		snakePop.push_back(child);
+		snakePop.push_back(clone);
 	}
 	mutate();
 }
@@ -87,12 +91,13 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 }
 
 void population::mutate() {
-	for (unsigned i = 1; i < snakePop.size(); i++) {
+	for (unsigned i = 1; i < snakePop.size(); i++) {	// Leave first snake (beste from last gen), and second snake (crossover snake) unmutated
 		snakePop[i].neuralnet.mutate(mutation_rate);
 	}
 }
 
-pair<snake, snake> population::get_fittest_snakes() {
+vector<snake> population::get_fittest_snakes() {
+	/*
 	int fitnessScore = 0;
 	unsigned fittestSnakeIndex = 0;
 	unsigned secondFittestSnakeIndex = 0;
@@ -103,5 +108,30 @@ pair<snake, snake> population::get_fittest_snakes() {
 			fitnessScore = snakePop[i].myStats.score;
 		}
 	}
-	return make_pair(snakePop[fittestSnakeIndex], snakePop[secondFittestSnakeIndex]);
+	*/
+	
+	// first = score, second = snakePop index
+	vector<pair<unsigned, unsigned>> sorted_list;
+
+	for (unsigned k = 0; k < this->size; k++) {
+		sorted_list.push_back(make_pair(this->snakePop[k].myStats.score, k));
+	}
+	sort(sorted_list.begin(), sorted_list.end());
+
+	vector<snake> fittest_snakes;
+	for (unsigned i = 0; i < 10; i++) {
+		fittest_snakes.push_back(snakePop[sorted_list[this->size - i - 1].second]);
+	}
+	return fittest_snakes;
+}
+
+vector<snake> population::multi_crossover(vector<snake> snakeVec, const vector<unsigned>& topology) {
+	// Snake with the highest score is in index 0.
+	// Crossover the best snake with the n-1 other
+	// snakes.
+	vector<snake> children;
+	for (unsigned i = 1; i < snakeVec.size(); i++) {
+		children.push_back(crossover(snakeVec[0], snakeVec[i], topology));
+	}
+	return children;
 }
