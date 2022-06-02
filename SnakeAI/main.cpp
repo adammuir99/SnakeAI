@@ -267,20 +267,20 @@ void visualize_snake(vector<pair<int, int >> testFood, net &snake_brain, SDL_Ren
 		for (unsigned k = 0; k < 4; k++) inputVals.push_back(0);
 
 		if (theGrid.foodCoords.second < x) {	// Food is to the left of snake
-			inputVals[25] = 1;	// LEFT
-			inputVals[26] = 0;	// RIGHT
+			inputVals[14] = 1;	// LEFT
+			inputVals[15] = 0;	// RIGHT
 		}
 		else if (theGrid.foodCoords.second > x) {	// Food is to the right of snake
-			inputVals[25] = 0;	// LEFT
-			inputVals[26] = 1;	// RIGHT
+			inputVals[14] = 0;	// LEFT
+			inputVals[15] = 1;	// RIGHT
 		}
 		if (theGrid.foodCoords.first < y) {	// Food is above snake
-			inputVals[23] = 1;
-			inputVals[24] = 0;
+			inputVals[12] = 1;
+			inputVals[13] = 0;
 		}
 		else if (theGrid.foodCoords.first > y) {
-			inputVals[23] = 0;
-			inputVals[24] = 1;
+			inputVals[12] = 0;
+			inputVals[13] = 1;
 		}
 
 		theSnake.neuralnet.feed_forward(inputVals);
@@ -363,26 +363,26 @@ void play_game(snake& theSnake, vector<pair<int, int>> testFood) {
 	while (gameActive) {	// Main game loop
 		theSnake.get_vision(theGrid.a);
 		vector<double> inputVals = theSnake.vision;
-		// Direction to go for food (23 = UP, 24 = DOWN, 25 = LEFT, 26 = RIGHT)
+		// Direction to go for food (24 = UP, 25 = DOWN, 26 = LEFT, 27 = RIGHT)
 		unsigned x = theSnake.getHead().second;
 		unsigned y = theSnake.getHead().first;
 		for (unsigned k = 0; k < 4; k++) inputVals.push_back(0);
 
 		if (theGrid.foodCoords.second < x) {	// Food is to the left of snake
-			inputVals[25] = 1;	// LEFT
-			inputVals[26] = 0;	// RIGHT
+			inputVals[14] = 1;	// LEFT
+			inputVals[15] = 0;	// RIGHT
 		}
 		else if (theGrid.foodCoords.second > x) {	// Food is to the right of snake
-			inputVals[25] = 0;	// LEFT
-			inputVals[26] = 1;	// RIGHT
+			inputVals[14] = 0;	// LEFT
+			inputVals[15] = 1;	// RIGHT
 		}
 		if (theGrid.foodCoords.first < y) {	// Food is above snake
-			inputVals[23] = 1;
-			inputVals[24] = 0;
+			inputVals[12] = 1;
+			inputVals[13] = 0;
 		}
 		else if (theGrid.foodCoords.first > y) {
-			inputVals[23] = 0;
-			inputVals[24] = 1;
+			inputVals[12] = 0;
+			inputVals[13] = 1;
 		}
 
 		theSnake.neuralnet.feed_forward(inputVals);
@@ -443,9 +443,9 @@ void play_game(snake& theSnake, vector<pair<int, int>> testFood) {
 
 int main(int argc, char *argv[]) {
 	// Change these variables
-	unsigned popSize = 20000;
+	unsigned popSize = 30000;
 	double mutation_rate = 0.04;
-	int max_generations = 50;
+	int max_generations = 10;
 
 	// Create the SDL window and renderer
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -460,7 +460,7 @@ int main(int argc, char *argv[]) {
 	//theGrid.new_food();
 
 	vector<unsigned> topology;
-	topology.push_back(28);	// Input Layer
+	topology.push_back(16);	// Input Layer
 	topology.push_back(16);	// Hidden Layer(s)
 	topology.push_back(16);
 	topology.push_back(4);	// Output Layer
@@ -515,18 +515,33 @@ int main(int argc, char *argv[]) {
 		}
 		crossed_index = highest_score_index;
 	}
-	cout << "Generation complete, visualize the data?" << endl;
-	system("pause");
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);	// Black
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
-	for (unsigned generation = 1; generation <= max_generations; generation++) {
-		net fittest_snake_brain = fittest_snakes[generation - 1][0].neuralnet;
-		visualize_snake(testFood, fittest_snake_brain, renderer, font, generation, topology);
+	cout << "Generation complete << endl" << endl;
+
+	while (true) {
+		string input;
+		cout << "Enter a generation to visualize (or 'all'): " << endl;
+		cin >> input;
+		if (input == "all") {
+			for (unsigned generation = 1; generation <= max_generations; generation++) {
+				net snake_brain = fittest_snakes[generation - 1][0].neuralnet;
+				visualize_snake(testFood, snake_brain, renderer, font, generation, topology);
+			}
+		}
+		else {
+			int generation = atoi(input.c_str());
+			if (generation > max_generations || generation < 1) {
+				cout << "Not a valid generation." << endl;
+				continue;
+			}
+			net snake_brain = fittest_snakes[generation - 1][0].neuralnet;
+			visualize_snake(testFood, snake_brain, renderer, font, generation, topology);
+		}
 	}
-	
 
 	TTF_CloseFont(font);
 	TTF_Quit();
