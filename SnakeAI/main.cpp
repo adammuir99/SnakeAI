@@ -8,6 +8,7 @@
 #include "population.h"
 #include "const.h"
 #include <iostream>
+#include <thread>
 using namespace std;
 
 bool check_valid(grid& theGrid, snake& theSnake, directions direction) {
@@ -441,11 +442,17 @@ void play_game(snake& theSnake, vector<pair<int, int>> testFood) {
 	return;
 }
 
+void multithreading(population &pop, unsigned start, unsigned end, vector<pair<int, int>> testFood) {
+	for (unsigned i = start; i < end; i++) {	// Loop through each snake and play the game
+		play_game(pop.snakePop[i], testFood);
+	}
+}
+
 int main(int argc, char* argv[]) {
 	// Change these variables
 	unsigned popSize = 30000;
-	double mutation_rate = 0.05;
-	int max_generations = 100;
+	double mutation_rate = 0.04;
+	int max_generations = 10;
 
 	// Create the SDL window and renderer
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -487,9 +494,18 @@ int main(int argc, char* argv[]) {
 		directions newDirection = directions::DOWN;
 
 		// Main Application Loop
-		for (unsigned i = 0; i < popSize; i++) {	// Loop through each snake and play the game
-			play_game(pop.snakePop[i], testFood);
-		}
+
+		unsigned increment = popSize / 4;
+		thread t1(multithreading, std::ref(pop), 0, increment, testFood);
+		thread t2(multithreading, std::ref(pop), increment, increment*2, testFood);
+		thread t3(multithreading, std::ref(pop), increment*2, increment*3, testFood);
+		thread t4(multithreading, std::ref(pop), increment*3, increment*4, testFood);
+
+		t1.join();
+		t2.join();
+		t3.join();
+		t4.join();
+
 
 		fittest_snakes.push_back(pop.get_fittest_snakes());
 		cout << "Generation " << generation << ": done loading. ";
