@@ -6,9 +6,6 @@ using namespace std;
 
 // ------------------------------ NEURON -------------------------------------
 
-double neuron::eta = 0.15;	// overall net learning rate, [0.0 .. 1.0]
-double neuron::alpha = 0.5; // momentum, multiplier of last deltaWeight, [0.0 .. n]
-
 neuron::neuron(unsigned numOutputs, unsigned myIndex) {
 	for (unsigned c = 0; c < numOutputs; c++) {
 		m_outputWeights.push_back(randomWeight());
@@ -23,24 +20,6 @@ void neuron::setOutputVal(double val) {
 
 double neuron::getOutputVal() const {
 	return m_outputVal;
-}
-
-void neuron::updateInputWeights(layer& prevLayer) {
-	// The weights to be updated are in the connection container
-	// in the neurons in the preceding layer
-	for (unsigned n = 0; n < prevLayer.size(); n++) {
-		neuron& neuron = prevLayer[n];
-
-		double newDeltaWeight =
-			// Individual input, magnified by the gradient and train rate:
-			eta
-			* neuron.getOutputVal()
-			* m_gradient
-			// Also add momentum = a fraction of the previous delta weight
-			* alpha;
-
-		neuron.m_outputWeights[m_myIndex] = newDeltaWeight;
-	}
 }
 
 // Returns a vector of all the weights from the previous layer to this neuron
@@ -61,27 +40,6 @@ void neuron::setInputWeights(layer& prevLayer, vector<double> inputWeights) {
 	return;
 }
 
-double neuron::sumDOW(const layer& nextLayer) const {
-	double sum = 0.0;
-
-	// Sum our contributions of the errors at the nodes we feed
-	for (unsigned n = 0; n < nextLayer.size() - 1; n++) {
-		sum += m_outputWeights[n] * nextLayer[n].m_gradient;
-	}
-
-	return sum;
-}
-
-void neuron::calcOutputGradients(double targetVal) {
-	double delta = targetVal - m_outputVal;
-	m_gradient = delta * neuron::transferFunctionDerivative(m_outputVal);
-}
-
-void neuron::calcHiddenGradients(const layer& nextLayer) {
-	double dow = sumDOW(nextLayer);
-	m_gradient = dow * neuron::transferFunctionDerivative(m_outputVal);
-}
-
 void neuron::feedForward(const layer& prevLayer) {
 	double sum = 0.0;
 
@@ -98,11 +56,6 @@ void neuron::feedForward(const layer& prevLayer) {
 double neuron::transferFunction(double x) {
 	// tanh - output range (-1.0 .. 1.0)
 	return tanh(x);
-}
-
-double neuron::transferFunctionDerivative(double x) {
-	// tanh derivative
-	return 1.0 - x * x;
 }
 
 double neuron::randomWeight() {
@@ -154,54 +107,6 @@ void net::feed_forward(const vector<double> &inputVals) {
 	}
 }
 
-void net::back_prop(const vector<double> &targetVals) {
-	// Calculate overall net error (RMS of output neuron errors)
-
-	layer& outputLayer = m_layers.back();
-	m_error = 0.0;
-
-	for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
-		double delta = targetVals[n] - outputLayer[n].getOutputVal();
-		m_error += delta * delta;
-	}
-	m_error /= outputLayer.size() - 1; // get average error squared
-	m_error = sqrt(m_error); // RMS
-
-	// Implement a recent average measurement
-
-	m_recentAverageError = (m_recentAverageError * m_recentAverageSmoothingFactor + m_error) / (m_recentAverageSmoothingFactor + 1.0);
-
-	// Calculate output layer gradients
-
-	for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
-		outputLayer[n].calcOutputGradients(targetVals[n]);
-	}
-
-	// Calculate gradients on hidden layers
-
-	for (unsigned layerNum = m_layers.size() - 2; layerNum > 0; layerNum--) {
-		layer& hiddenLayer = m_layers[layerNum];
-		layer& nextLayer = m_layers[layerNum + 1];
-
-		for (unsigned n = 0; n < hiddenLayer.size(); n++) {
-			hiddenLayer[n].calcHiddenGradients(nextLayer);
-		}
-	}
-
-	// For all layers from outputs to first hidden layer,
-	// update connection weights
-
-	for (unsigned layerNum = m_layers.size() - 1; layerNum > 0; layerNum--) {
-		layer& currLayer = m_layers[layerNum];
-		layer& prevLayer = m_layers[layerNum - 1];
-
-		for (unsigned n = 0; n < currLayer.size() - 1; n++) {
-			currLayer[n].updateInputWeights(prevLayer);
-		}
-	}
-
-}
-
 void net::get_results(vector<double> &resultVals) const {
 	resultVals.clear();
 
@@ -248,22 +153,4 @@ void net::mutate(double mutation_rate) {
 		m_layers[layerNum] = currLayer;
 		m_layers[layerNum - 1] = prevLayer;
 	}
-}
-
-void neural_net() {
-	// e.g. {3, 2, 1}
-	vector<unsigned> topology;
-	topology.push_back(1);
-	topology.push_back(2);
-	topology.push_back(3);
-	net myNet(topology);
-
-	vector<double> inputVals;
-	myNet.feed_forward(inputVals);
-
-	vector<double> targetVals;
-	myNet.back_prop(targetVals);
-
-	vector<double> resultVals;
-	myNet.get_results(resultVals);
 }

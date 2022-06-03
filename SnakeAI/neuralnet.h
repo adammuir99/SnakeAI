@@ -13,9 +13,6 @@ public:
 	void setOutputVal(double val);
 	double getOutputVal(void) const;
 	void feedForward(const layer& prevLayer);
-	void calcOutputGradients(double targetVal);
-	void calcHiddenGradients(const layer &nextLayer);
-	void updateInputWeights(layer& prevLayer);
 	vector<double> getInputWeights(layer& prevLayer);
 	void setInputWeights(layer& prevLayer, vector<double> inputWeights);
 	void mutate_weights(layer& prevLayer, double mutation_rate);
@@ -24,13 +21,8 @@ private:
 	double m_outputVal;
 	vector<double> m_outputWeights;
 	unsigned m_myIndex;
-	double m_gradient;
-	static double eta;	// [0.0 .. 1.0] overall net training rate
-	static double alpha;// [0.0 .. n] multiplier of last weight change (momentum)
 	static double randomWeight();
 	static double transferFunction(double x);
-	static double transferFunctionDerivative(double x);
-	double sumDOW(const layer & nextLayer) const;
 };
 
 class net {
@@ -46,9 +38,6 @@ public:
 
 private:
 	vector<layer> m_layers; // layers[layerNum][neuronNum]
-	double m_error;
-	double m_recentAverageError;
-	double m_recentAverageSmoothingFactor;
 };
 
 

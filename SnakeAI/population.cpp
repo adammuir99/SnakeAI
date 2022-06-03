@@ -20,7 +20,6 @@ population::population(unsigned size, double mutation_rate, const vector<unsigne
 	snake clone(topology);
 	clone.neuralnet = child.neuralnet;
 
-	//snakePop.push_back(parents.first);	// First snake is the same as the best snake from the last generation without crossover
 	for (unsigned i = 0; i < size; i++) {
 		snakePop.push_back(clone);
 	}
@@ -49,13 +48,6 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 		dad_weights.push_back(dad_brain.get_layer_weights(layer));
 	}
 
-	/*ofstream output_file("momlayer0.txt");
-	ostream_iterator<double> output_iterator(output_file, "\t");
-	for (int i = 0; i < mom_weights[0].size(); i++) {
-		copy(mom_weights[0].at(i).begin(), mom_weights[0].at(i).end(), output_iterator);
-		output_file << endl;
-	}*/
-
 	// Now we have 3D vectors of mom and dad's weights
 	// Take half of mom's weights and half of dad's weights,
 	// and assign to child
@@ -77,38 +69,18 @@ snake population::crossover(snake mom, snake dad, const vector<unsigned>& topolo
 		child_brain.set_layer_weights(layer, child_weights[layer - 1]);
 	}
 
-	//snake child(topology);
 	child.neuralnet = child_brain;
-
-	/*ofstream output_file2("childlayer0.txt");
-	ostream_iterator<double> output_iterator2(output_file2, "\t");
-	for (int i = 0; i < mom_weights[0].size(); i++) {
-		copy(child_weights[0].at(i).begin(), child_weights[0].at(i).end(), output_iterator2);
-		output_file2 << endl;
-	}*/
 	
 	return child;
 }
 
 void population::mutate() {
-	for (unsigned i = 1; i < snakePop.size(); i++) {	// Leave first snake (beste from last gen), and second snake (crossover snake) unmutated
+	for (unsigned i = 1; i < snakePop.size(); i++) {	// Leave first snake (best from last gen), and second snake (crossover snake) unmutated
 		snakePop[i].neuralnet.mutate(mutation_rate);
 	}
 }
 
 vector<snake> population::get_fittest_snakes() {
-	/*
-	int fitnessScore = 0;
-	unsigned fittestSnakeIndex = 0;
-	unsigned secondFittestSnakeIndex = 0;
-	for (unsigned i = 0; i < size; i++) {
-		if (snakePop[i].myStats.score > fitnessScore) {
-			secondFittestSnakeIndex = fittestSnakeIndex;
-			fittestSnakeIndex = i;
-			fitnessScore = snakePop[i].myStats.score;
-		}
-	}
-	*/
 	
 	// first = score, second = snakePop index
 	vector<pair<unsigned, unsigned>> sorted_list;

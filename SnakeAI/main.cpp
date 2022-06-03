@@ -441,31 +441,27 @@ void play_game(snake& theSnake, vector<pair<int, int>> testFood) {
 	return;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
 	// Change these variables
 	unsigned popSize = 30000;
-	double mutation_rate = 0.04;
-	int max_generations = 10;
+	double mutation_rate = 0.05;
+	int max_generations = 100;
 
 	// Create the SDL window and renderer
 	SDL_Init(SDL_INIT_EVERYTHING);
-	SDL_Window *window = SDL_CreateWindow("Snake", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 801, 601, SDL_WINDOW_SHOWN);
+	SDL_Window* window = SDL_CreateWindow("Snake", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 801, 601, SDL_WINDOW_SHOWN);
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 
 	TTF_Init();
 	TTF_Font* font = TTF_OpenFont("arial.ttf", 22);
-
-	// Create snake, grid, and stats objects
-	//grid theGrid;
-	//theGrid.new_food();
 
 	vector<unsigned> topology;
 	topology.push_back(16);	// Input Layer
 	topology.push_back(16);	// Hidden Layer(s)
 	topology.push_back(16);
 	topology.push_back(4);	// Output Layer
-	
-	srand(1);
+
+	srand(5);
 
 	vector<pair<int, int>> testFood;
 
@@ -474,8 +470,8 @@ int main(int argc, char *argv[]) {
 		int y = rand() % 40;
 		testFood.push_back(make_pair(y, x));
 	}
-	
-	
+
+
 	population pop(popSize, mutation_rate, topology);
 	vector<vector<snake>> fittest_snakes;
 	vector<vector<snake>> crossed_snakes;
@@ -496,7 +492,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		fittest_snakes.push_back(pop.get_fittest_snakes());
-		cout << "Generation " << generation << ": done loading." << endl;
+		cout << "Generation " << generation << ": done loading. ";
 		cout << "Fittest snake had score: " << fittest_snakes[generation - 1][0].myStats.score << endl;
 
 		crossed_snakes.push_back(pop.multi_crossover(fittest_snakes[generation - 1], topology));
@@ -520,7 +516,17 @@ int main(int argc, char *argv[]) {
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
-	cout << "Generation complete << endl" << endl;
+	cout << "Training complete." << endl;
+
+	unsigned best_snake = 0;
+	unsigned best_score = 0;
+	for (unsigned i = 0; i < max_generations; i++) {
+		if (fittest_snakes[i][0].myStats.score > best_score) {
+			best_score = fittest_snakes[i][0].myStats.score;
+			best_snake = i;
+		}
+	}
+	cout << "The highest score was in generation " << best_snake + 1 << " with a score of " << best_score << endl;
 
 	while (true) {
 		string input;

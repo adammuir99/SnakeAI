@@ -31,18 +31,9 @@ void grid::new_food(){
 			}
 		}
 	}
-	/*
-	int randomX = rand() % GRID_WIDTH;
-	int randomY = rand() % GRID_HEIGHT;
-	// If the random location is already occupied by the snake or is in the same spot as the old food, find a new location
-	while (this->a[randomY][randomX] != EMPTY || make_pair(randomY, randomX) == oldFood){
-		randomX = rand() % GRID_WIDTH;
-		randomY = rand() % GRID_HEIGHT;
-	}
 
-	this->a[randomY][randomX] = FOOD;
-	*/
 	foodIndex++;
+	// Loop food vector so it never ends
 	if (foodIndex > 999) {
 		foodIndex = 0;
 	}
